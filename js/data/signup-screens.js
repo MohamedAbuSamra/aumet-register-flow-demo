@@ -1,0 +1,21 @@
+/** Pharmacy sign-up flow screens (screenshot layer) */
+export const signupScreens = [
+      { id: "onboarding",    photo: "scr/onboarding/Screenshot_20260707_155801.jpg", label: "Onboarding (EN)", scope: "signup", group: "Onboarding" },
+      { id: "register-1",    photo: "scr/register-form/Screenshot_20260707_185456.jpg", label: "Register form — top (EN)",  scope: "signup", group: "Register" },
+      { id: "register-2",    photo: "scr/register-form/Screenshot_20260707_185500.jpg", label: "Register form — bottom (EN)", scope: "signup", group: "Register" },
+      { id: "loading",       photo: "scr/register-form/Screenshot_20260707_185630.jpg", label: "Submitting…",               scope: "signup", group: "Register" },
+      { id: "otp",           photo: "scr/verify/Screenshot_20260707_185635.jpg", label: "Verify phone (OTP)",        scope: "signup", group: "Verify" },
+      { id: "reg-complete",  photo: "scr/profile/Screenshot_20260707_191307.jpg", label: "Registration completed",    scope: "signup", group: "Profile" },
+      { id: "location-map",  photo: "scr/profile/Screenshot_20260707_191319.jpg", label: "Pharmacy location (map)",   scope: "signup", group: "Profile" },
+      { id: "location-details", photo: "scr/profile/Screenshot_20260707_191326.jpg", label: "Location details",       scope: "signup", group: "Profile" },
+      { id: "location-added", photo: "scr/profile/Screenshot_20260707_191333.jpg", label: "Location added",           scope: "signup", group: "Profile" },
+      { id: "documents",     photo: "scr/documents/Screenshot_20260707_191343.jpg", label: "Documents — empty",         scope: "signup", group: "Documents" },
+      { id: "documents-filled", photo: "scr/documents/Screenshot_20260707_191427.jpg", label: "Documents — uploaded",   scope: "signup", group: "Documents" },
+      { id: "doc-picker",    photo: "scr/documents/Screenshot_20260707_191450.jpg", label: "Document type picker",      scope: "signup", group: "Documents" },
+      { id: "doc-success",   photo: "scr/documents/Screenshot_20260707_191518.jpg", label: "Document uploaded!",        scope: "signup", group: "Documents" },
+      { id: "other-info",    photo: "scr/profile/Screenshot_20260707_191524.jpg", label: "Other information",         scope: "signup", group: "Profile" },
+      { id: "other-filled",  photo: "scr/profile/Screenshot_20260707_191820.jpg", label: "Other info — filled",       scope: "signup", group: "Profile" },
+      { id: "welcome",       photo: "scr/done/Screenshot_20260707_191708.jpg", label: "Welcome / Success",           scope: "signup", group: "Done" },
+      { id: "profile",       photo: "scr/done/Screenshot_20260707_191717.jpg", label: "Complete your profile",       scope: "signup", group: "Done" },
+      { id: "profile-done",  photo: "scr/done/Screenshot_20260707_191856.jpg", label: "Profile checklist (done)",  scope: "signup", group: "Done" },
+    ];
