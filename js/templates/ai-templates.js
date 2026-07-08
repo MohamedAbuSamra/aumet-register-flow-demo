@@ -45,8 +45,8 @@ export function profileScreenAi(opts = {}) {
 export function buildAiTemplates() {
   const aiTemplates = {
   "ai-onboarding": prefixGotos(codeTemplates.onboarding),
-  "ai-register-1": prefixGotos(registerForm(false, false)),
-  "ai-register-2": prefixGotos(registerForm(false, true)),
+  "ai-register-1": prefixGotos(registerForm(false)),
+  "ai-register-2": prefixGotos(registerForm(true)),
   "ai-loading": prefixGotos(codeTemplates.loading),
   "ai-otp": prefixGotos(codeTemplates.otp),
   "ai-reg-complete": milestoneScreen("Registration completed!", pinSvg,
