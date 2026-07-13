@@ -1234,100 +1234,91 @@
       text-align: center;
     }
 
-    /* Landing / onboarding */
-    .ca-landing .ca-hero {
-      height: 200px;
+    /* Landing — exact app screenshots + hotspots */
+    .ca-landing {
+      position: relative;
+      width: 100%;
+      height: 100%;
+      background: #fff;
+      overflow: hidden;
     }
-    .ca-landing .ca-logo {
-      top: 72px;
-      width: 150px;
-    }
-    .ca-landing-body {
-      pointer-events: none;
-    }
-    .ca-landing-body > * {
-      pointer-events: auto;
-    }
-    .ca-landing-art {
+    .ca-landing-shot {
       position: absolute;
-      left: 50%;
-      top: 118px;
-      transform: translateX(-50%);
-      width: 250px;
-      height: auto;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      object-position: center top;
       display: block;
-      z-index: 2;
+      opacity: 0;
       pointer-events: none;
+      transition: opacity 0.22s ease;
+      z-index: 1;
     }
-    .ca-landing-title {
+    .ca-landing-shot.is-active {
+      opacity: 1;
+    }
+    .ca-landing-shot[hidden] {
+      display: block !important;
+    }
+    .ca-landing-hit {
       position: absolute;
-      left: 22px;
-      right: 22px;
-      top: 378px;
-      margin: 0;
-      font-size: 18px;
-      font-weight: 700;
-      line-height: 1.3;
-      color: #0e9a8a;
-      text-align: left;
+      z-index: 4;
+      border: none;
+      background: transparent;
+      padding: 0;
+      cursor: pointer;
     }
-    .ca-landing-sub {
-      position: absolute;
-      left: 22px;
-      right: 22px;
-      top: 430px;
-      margin: 0;
-      font-size: 12.5px;
-      font-weight: 400;
-      line-height: 1.45;
-      color: #3c495a;
-      text-align: left;
+    .ca-landing-hit-register {
+      left: 5.5%;
+      right: 5.5%;
+      top: 72.8%;
+      height: 6.6%;
+      border-radius: 999px;
     }
-    .ca-landing-dots {
+    .ca-landing-hit-login {
+      left: 5.5%;
+      right: 5.5%;
+      top: 80.4%;
+      height: 6.6%;
+      border-radius: 999px;
+    }
+    .ca-landing-hit-help {
+      left: 28%;
+      right: 28%;
+      top: 88.2%;
+      height: 4%;
+    }
+    .ca-landing-swipe {
       position: absolute;
       left: 0;
       right: 0;
-      top: 478px;
+      top: 8%;
+      height: 62%;
+      z-index: 3;
+      touch-action: pan-y;
+      cursor: grab;
+    }
+    .ca-landing-dot-hits {
+      position: absolute;
+      left: 0;
+      right: 0;
+      top: 67.2%;
+      height: 4.2%;
+      z-index: 5;
       display: flex;
       justify-content: center;
       align-items: center;
-      gap: 6px;
+      gap: 10px;
     }
-    .ca-landing-dots span {
-      width: 7px;
-      height: 7px;
+    .ca-landing-dot-hits button {
+      width: 18px;
+      height: 18px;
+      border: none;
       border-radius: 999px;
-      background: #b7e5de;
-    }
-    .ca-landing-dots span.is-active {
-      width: 22px;
-      background: var(--teal);
-    }
-    .ca-landing-register {
-      position: absolute;
-      left: 18px;
-      right: 18px;
-      top: 510px;
-      height: 48px;
-      font-size: 15px;
-    }
-    .ca-landing-login {
-      position: absolute;
-      left: 18px;
-      right: 18px;
-      top: 568px;
-      height: 48px;
-      margin: 0;
-      border: 2px solid var(--teal);
-      border-radius: 999px;
-      background: #fff;
-      color: var(--teal);
-      font-size: 15px;
-      font-weight: 700;
+      background: transparent;
+      padding: 0;
       cursor: pointer;
-    }
-    .ca-landing-help {
-      top: 630px;
     }
 
     /* Verify OTP */

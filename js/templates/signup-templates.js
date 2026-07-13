@@ -226,25 +226,22 @@ function cpDropdown(name, value, options, { multi = false, chips = [] } = {}) {
 
 export const codeTemplates = {
   landing: `
-    <div class="ca ca-landing">
-      ${caHero("", { languageLabel: "Language", showGlobe: false, languageSide: "left" })}
+    <div class="ca ca-landing" data-landing-carousel>
+      <img class="ca-landing-shot is-active" src="scr/onboarding/onboard-1.png" alt="Your Pharmacy’s Order Anywhere, Anytime" data-slide="0" />
+      <img class="ca-landing-shot" src="scr/onboarding/onboard-2.png" alt="One Stop Shop" data-slide="1" hidden />
+      <img class="ca-landing-shot" src="scr/onboarding/onboard-3.png" alt="Compare Products & Discover Hot Offers" data-slide="2" hidden />
 
-      <div class="ca-body ca-landing-body">
-        <img class="ca-landing-art" src="scr/onboarding/landing-illustration.png" alt="" />
+      <button type="button" class="ca-landing-hit ca-landing-hit-register" data-goto="create-account" aria-label="Register as Pharmacy"></button>
+      <button type="button" class="ca-landing-hit ca-landing-hit-login" data-goto="login" aria-label="Log In"></button>
+      <button type="button" class="ca-landing-hit ca-landing-hit-help" aria-label="Need Help?"></button>
 
-        <h1 class="ca-landing-title">Compare Products &amp; Discover Hot Offers</h1>
-        <p class="ca-landing-sub">Easily compare distributors prices, check availability &amp; discover the newest hot offers</p>
+      <div class="ca-landing-swipe" data-landing-swipe aria-hidden="true"></div>
 
-        <div class="ca-landing-dots" aria-hidden="true">
-          <span></span><span></span><span class="is-active"></span>
-        </div>
-
-        <button type="button" class="ca-cta ca-landing-register" data-goto="create-account">Register as Pharmacy</button>
-        <button type="button" class="ca-landing-login" data-goto="login">Log In</button>
-        <button type="button" class="ca-need-help ca-landing-help">Need Help?</button>
+      <div class="ca-landing-dot-hits" role="tablist" aria-label="Onboarding slides">
+        <button type="button" class="is-active" data-landing-dot="0" aria-label="Slide 1"></button>
+        <button type="button" data-landing-dot="1" aria-label="Slide 2"></button>
+        <button type="button" data-landing-dot="2" aria-label="Slide 3"></button>
       </div>
-
-      <div class="ca-home-indicator" aria-hidden="true"></div>
     </div>`,
 
   "create-account": `
