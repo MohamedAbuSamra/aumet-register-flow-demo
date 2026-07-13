@@ -1,2 +1,9 @@
-/** Login scope — placeholder for future screens & screenshots */
-export const loginScreens = [];
+/** Login screens */
+export const loginScreens = [
+  {
+    id: "login",
+    label: "Log in",
+    scope: "login",
+    group: "Account",
+  },
+];

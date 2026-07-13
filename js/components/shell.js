@@ -11,19 +11,9 @@ export function renderShell() {
           </div>
 
           <div class="panel-section">
-            <span class="section-label">Scope</span>
-            <div class="chip-row" id="scopeChips">
-              <button type="button" class="chip chip-signup active" data-scope="signup">Sign up</button>
-              <button type="button" class="chip chip-login" data-scope="login">Login</button>
-            </div>
-          </div>
-
-          <div class="panel-section" id="viewSection">
-            <span class="section-label">View</span>
-            <div class="chip-row" id="viewChips">
-              <button type="button" class="chip chip-view" data-view="photo">Screenshot</button>
-              <button type="button" class="chip chip-view" data-view="code">Editable</button>
-              <button type="button" class="chip chip-ai active" data-flow="ai">AI</button>
+            <span class="section-label">Epic</span>
+            <div class="chip-row" id="epicChips">
+              <button type="button" class="chip chip-register active" data-epic="register">Register</button>
             </div>
           </div>
 
@@ -33,7 +23,12 @@ export function renderShell() {
             <span class="steps-entry-chevron">›</span>
           </button>
 
-          <div class="scope-hint" id="scopeHint"></div>
+          <div class="nav-row menu-nav-row">
+            <button class="btn-prev" id="prevBtn" type="button" aria-label="Previous" disabled>‹</button>
+            <button class="btn-next" id="nextBtn" type="button" aria-label="Next" disabled>›</button>
+          </div>
+
+          <div class="scope-hint" id="scopeHint">Pharmacy registration &amp; complete profile</div>
         </div>
 
         <div class="panel-view" id="panelSteps">
@@ -41,23 +36,23 @@ export function renderShell() {
             <button type="button" class="panel-back" id="backToMenu">‹ Back</button>
             <div class="steps-head-meta">
               <div class="steps-head-row">
-                <span class="chip chip-scope" id="stepsScopeChip">Sign up</span>
-                <span class="flow-progress" id="flowProgress">1 / 21</span>
+                <span class="chip chip-scope chip-register" id="stepsEpicChip">Register</span>
+                <span class="flow-progress" id="flowProgress">0 / 0</span>
               </div>
               <div class="progress-track"><div class="progress-fill" id="progressFill"></div></div>
             </div>
           </div>
           <div class="steps-scroll-panel">
             <ul class="steps-list" id="stepsList"></ul>
-            <div class="steps-empty" id="stepsEmpty" hidden>
-              <span class="chip chip-muted">Coming soon</span>
-              <p>Add login screenshots to <code>js/data/login-screens.js</code></p>
+            <div class="steps-empty" id="stepsEmpty">
+              <span class="chip chip-muted">Empty</span>
+              <p>No steps yet. Send your first screen to begin.</p>
             </div>
           </div>
           <div class="panel-steps-foot">
             <div class="nav-row">
-              <button class="btn-prev" id="prevBtn" type="button" aria-label="Previous">‹</button>
-              <button class="btn-next" id="nextBtn" type="button" aria-label="Next">›</button>
+              <button class="btn-prev" id="prevBtnSteps" type="button" aria-label="Previous" disabled>‹</button>
+              <button class="btn-next" id="nextBtnSteps" type="button" aria-label="Next" disabled>›</button>
             </div>
           </div>
         </div>
@@ -70,7 +65,16 @@ export function renderShell() {
           <div class="phone-unit">
             <div class="phone-scaler" id="phoneScaler">
               <div class="phone">
-                <div class="phone-screen" id="phoneScreen"></div>
+                <div class="phone-screen" id="phoneScreen">
+                  <div class="screen active" data-screen="empty" data-flow="current">
+                    <div class="screen-code">
+                      <div class="v2-pending">
+                        <p class="v2-pending-label">Ready</p>
+                        <p class="v2-pending-hint">Send your first screen to start</p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
                 <div class="phone-btn"></div>
               </div>
             </div>
@@ -82,17 +86,14 @@ export function renderShell() {
                 <option value="5">5s</option>
                 <option value="8">8s</option>
               </select>
-              <div class="demo-ai-result" id="aiResultToggle" title="AI verification outcome">
-                <button type="button" class="demo-result-btn" data-result="fail">Fail</button>
-                <button type="button" class="demo-result-btn active" data-result="pass">Pass</button>
-              </div>
+              <span class="demo-sep" aria-hidden="true"></span>
+              <button type="button" class="demo-btn demo-ai-pass active" data-ai-outcome="pass" title="AI verify: Pass" aria-pressed="true">✓</button>
+              <button type="button" class="demo-btn demo-ai-fail" data-ai-outcome="fail" title="AI verify: Fail" aria-pressed="false">✕</button>
             </div>
           </div>
         </div>
         <div class="scope-empty-phone" id="scopeEmptyPhone" hidden>
-          <span class="chip chip-muted">Login</span>
           <p>Coming soon</p>
-          <p class="scope-empty-hint">Add screens in <code>js/data/login-screens.js</code></p>
         </div>
       </div>
     </main>

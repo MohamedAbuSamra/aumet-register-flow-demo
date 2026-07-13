@@ -1,29 +1,27 @@
 import { renderShell } from "./components/shell.js";
-import { SCOPES } from "./config/scopes.js";
+import { EPICS } from "./config/scopes.js";
 import { signupScreens } from "./data/signup-screens.js";
 import { loginScreens } from "./data/login-screens.js";
-import { aiScreens, buildAiDemoFlow } from "./data/ai-screens.js";
 import { codeTemplates } from "./templates/signup-templates.js";
-import { buildAiTemplates } from "./templates/ai-templates.js";
 
-const aiTemplates = buildAiTemplates();
+const EPIC_SCREENS = {
+  register: signupScreens,
+};
 
 const state = {
-  scope: "signup",
-  mainMode: "ai",
-  viewMode: "photo",
+  epic: "register",
+  viewMode: "code",
   current: 0,
   isPlaying: false,
   autoplayTimer: null,
-  aiSimResult: "pass",
+  aiOutcome: "pass",
+  aiRunning: false,
 };
 
 let els = {};
 
 function activeFlow() {
-  if (state.scope === "login") return loginScreens;
-  if (state.mainMode === "ai") return buildAiDemoFlow(state.aiSimResult);
-  return signupScreens;
+  return EPIC_SCREENS[state.epic] || [];
 }
 
 function shortStepName(s) {
@@ -37,23 +35,33 @@ function mountScreens() {
   const phoneScreen = els.phoneScreen;
   phoneScreen.innerHTML = "";
 
-  signupScreens.forEach((s, i) => {
+  const all = [
+    ...signupScreens.map((s) => ({ ...s, flow: "register" })),
+    ...loginScreens.map((s) => ({ ...s, flow: "login" })),
+  ];
+
+  if (!all.length) {
+    phoneScreen.innerHTML = `
+      <div class="screen active" data-screen="empty" data-flow="register">
+        <div class="screen-code">
+          <div class="v2-pending">
+            <p class="v2-pending-label">Ready</p>
+            <p class="v2-pending-hint">Send your first screen to start</p>
+          </div>
+        </div>
+      </div>`;
+    return;
+  }
+
+  all.forEach((s, i) => {
     const el = document.createElement("div");
     el.className = "screen" + (i === 0 ? " active" : "");
     el.dataset.screen = s.id;
-    el.dataset.flow = "current";
-    el.innerHTML = `
-      <div class="screen-photo"><img src="${s.photo}" alt="${s.label}" loading="lazy"${s.photoFit ? ` class="fit-${s.photoFit}"` : ""} /></div>
-      <div class="screen-code">${codeTemplates[s.id] || ""}</div>`;
-    phoneScreen.appendChild(el);
-  });
-
-  aiScreens.forEach((s) => {
-    const el = document.createElement("div");
-    el.className = "screen";
-    el.dataset.screen = s.id;
-    el.dataset.flow = "ai";
-    el.innerHTML = `<div class="screen-code">${aiTemplates[s.id]}</div>`;
+    el.dataset.flow = s.flow;
+    const photo = s.photo
+      ? `<div class="screen-photo"><img src="${s.photo}" alt="${s.label}" /></div>`
+      : "";
+    el.innerHTML = `${photo}<div class="screen-code">${codeTemplates[s.id] || ""}</div>`;
     phoneScreen.appendChild(el);
   });
 }
@@ -64,78 +72,41 @@ function showPanel(name) {
 }
 
 function updateChips() {
-  els.scopeChips.querySelectorAll(".chip").forEach((btn) => {
-    btn.classList.toggle("active", btn.dataset.scope === state.scope);
+  document.querySelectorAll("#demoBar [data-ai-outcome]").forEach((btn) => {
+    const on = btn.dataset.aiOutcome === state.aiOutcome;
+    btn.classList.toggle("active", on);
+    btn.setAttribute("aria-pressed", String(on));
   });
 
-  const isPhoto = state.scope === "signup" && state.mainMode === "current" && state.viewMode === "photo";
-  const isEdit = state.scope === "signup" && state.mainMode === "current" && state.viewMode === "code";
-  const isAi = state.scope === "signup" && state.mainMode === "ai";
-
-  els.viewSection.hidden = state.scope === "login";
-  els.viewChips.querySelectorAll(".chip").forEach((btn) => {
-    if (btn.dataset.flow === "ai") btn.classList.toggle("active", isAi);
-    else if (btn.dataset.view === "photo") btn.classList.toggle("active", isPhoto);
-    else if (btn.dataset.view === "code") btn.classList.toggle("active", isEdit);
+  const epic = EPICS[state.epic];
+  els.epicChips?.querySelectorAll("[data-epic]").forEach((btn) => {
+    btn.classList.toggle("active", btn.dataset.epic === state.epic);
   });
-
-  els.stepsScopeChip.textContent = SCOPES[state.scope]?.label || state.scope;
-  els.stepsScopeChip.className = `chip chip-scope chip-${state.scope}`;
+  if (els.stepsEpicChip && epic) {
+    els.stepsEpicChip.textContent = epic.label;
+    els.stepsEpicChip.className = `chip chip-scope ${epic.chipClass || ""}`;
+  }
 
   const flow = activeFlow();
-  els.stepCount.textContent = String(flow.length);
-  els.scopeHint.textContent = state.scope === "login"
-    ? SCOPES.login.description
-    : isAi
-      ? (state.aiSimResult === "pass"
-        ? "AI demo · Pass — verified & ready to go"
-        : "AI demo · Fail — documents rejected & blocked")
-      : "Current app sign up";
+  if (els.stepCount) els.stepCount.textContent = String(flow.length);
+  if (els.scopeHint) {
+    els.scopeHint.textContent = flow.length
+      ? (epic?.description || "")
+      : "No steps yet — ready for your first screen";
+  }
 
-  const empty = state.scope === "login" && !loginScreens.length;
-  els.scopeEmptyPhone.hidden = !empty;
-  els.phoneColumn.hidden = empty;
+  const empty = !flow.length;
+  if (els.scopeEmptyPhone) els.scopeEmptyPhone.hidden = !empty;
+  if (els.phoneColumn) els.phoneColumn.hidden = empty;
 }
 
-function setScope(scope) {
-  if (state.scope === scope) return;
-  state.scope = scope;
+function setEpic(epicId) {
+  if (!EPICS[epicId] || state.epic === epicId) return;
+  state.epic = epicId;
   state.current = 0;
-  if (scope === "login") {
-    state.mainMode = "current";
-    state.viewMode = "photo";
-  }
-  applyDocumentMode();
   updateChips();
   goTo(0);
   fitPhone();
-}
-
-function setMainMode(mode, resetStep = false) {
-  const changed = state.mainMode !== mode;
-  state.mainMode = mode;
-  if (resetStep || changed) state.current = 0;
-  applyDocumentMode();
-  updateChips();
-  updateAiResultButtons();
-  goTo(state.current);
-  fitPhone();
-}
-
-function setView(mode) {
-  state.viewMode = mode;
-  document.documentElement.classList.toggle("view-photo", mode === "photo");
-  document.documentElement.classList.toggle("view-code", mode === "code");
-  updateChips();
-}
-
-function applyDocumentMode() {
-  document.documentElement.classList.toggle("mode-ai", state.mainMode === "ai" && state.scope === "signup");
-  document.documentElement.classList.toggle("mode-current", state.mainMode === "current" || state.scope === "login");
-  document.documentElement.classList.toggle("mode-login", state.scope === "login");
-  if (state.scope === "login") {
-    document.documentElement.classList.remove("mode-ai");
-  }
 }
 
 function renderStepsList() {
@@ -151,7 +122,7 @@ function renderStepsList() {
   let html = "";
   let lastGroup = "";
   flow.forEach((s, i) => {
-    const group = s.group || s.phase || "Steps";
+    const group = s.group || "Steps";
     if (group !== lastGroup) {
       html += `<li class="step-group"><span class="chip chip-group">${group}</span></li>`;
       lastGroup = group;
@@ -162,25 +133,6 @@ function renderStepsList() {
   els.stepsList.querySelectorAll("button").forEach((b) =>
     b.addEventListener("click", () => goTo(Number(b.dataset.i)))
   );
-}
-
-function updateAiResultButtons() {
-  if (!els.aiResultToggle) return;
-  els.aiResultToggle.querySelectorAll(".demo-result-btn").forEach((btn) => {
-    btn.classList.toggle("active", btn.dataset.result === state.aiSimResult);
-  });
-}
-
-function setAiSimResult(result) {
-  if (state.aiSimResult === result) return;
-  state.aiSimResult = result;
-  updateAiResultButtons();
-  if (state.mainMode === "ai" && state.scope === "signup") {
-    updateChips();
-    goToId("ai-upload");
-    return;
-  }
-  updateChips();
 }
 
 function updatePlayState() {
@@ -218,87 +170,559 @@ function bindGoto() {
   document.querySelectorAll("[data-goto]").forEach((el) => {
     el.onclick = (e) => {
       e.preventDefault();
-      if (el.id === "btnSubmitAi") {
-        goToId("ai-processing");
-        runAiProcessing();
-        return;
-      }
       goToId(el.dataset.goto);
-      if (el.dataset.goto === "ai-processing") runAiProcessing();
     };
   });
-  const mockTax = document.getElementById("mockUploadTax");
-  if (mockTax) {
-    mockTax.onclick = (e) => {
+  bindOtpInputs();
+  bindHomeDemo();
+  bindCpDropdowns();
+  bindAiVerify();
+}
+
+function closeAllCpMenus(except) {
+  document.querySelectorAll(".screen.active .cp-dropdown.is-open").forEach((el) => {
+    if (el === except) return;
+    el.classList.remove("is-open");
+    const trigger = el.querySelector(".cp-dropdown-trigger");
+    const menu = el.querySelector(".cp-dropdown-menu");
+    if (trigger) trigger.setAttribute("aria-expanded", "false");
+    if (menu) menu.hidden = true;
+  });
+}
+
+function closeDocSheet() {
+  const sheet = document.querySelector(".screen.active #doc-update-sheet");
+  if (!sheet) return;
+  sheet.classList.remove("is-open");
+  sheet.hidden = true;
+  sheet.dataset.doc = "";
+}
+
+function openDocSheet(docId) {
+  const sheet = document.querySelector(".screen.active #doc-update-sheet");
+  if (!sheet) return;
+  closeAllCpMenus();
+  sheet.dataset.doc = docId || "";
+  sheet.hidden = false;
+  requestAnimationFrame(() => sheet.classList.add("is-open"));
+}
+
+function bindCpDropdowns() {
+  const root = document.querySelector(".screen.active .cp");
+  if (!root) return;
+
+  root.querySelectorAll(".cp-dropdown").forEach((dd) => {
+    const trigger = dd.querySelector(".cp-dropdown-trigger");
+    const menu = dd.querySelector(".cp-dropdown-menu");
+    if (!trigger || !menu) return;
+
+    trigger.onclick = (e) => {
       e.preventDefault();
-      const slot = document.getElementById("taxSlot");
-      if (slot) {
-        slot.classList.add("uploaded");
-        slot.classList.remove("error");
-        slot.innerHTML = `<div class="slot-icon">✓</div><div class="slot-body"><h4>Tax Card</h4><p>tax_card.pdf · 640 KB</p><button class="slot-action">Replace file</button></div>`;
-      }
+      e.stopPropagation();
+      const open = !dd.classList.contains("is-open");
+      closeAllCpMenus();
+      if (!open) return;
+      dd.classList.add("is-open");
+      trigger.setAttribute("aria-expanded", "true");
+      menu.hidden = false;
     };
+
+    menu.querySelectorAll(".cp-dropdown-option").forEach((opt) => {
+      opt.onclick = (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        const value = opt.dataset.value;
+
+        if (dd.dataset.multi === "true") {
+          const chipsWrap = dd.querySelector(".cp-dropdown-chips");
+          let selected = [...chipsWrap.querySelectorAll("[data-chip]")].map((c) => c.dataset.chip);
+          if (selected.includes(value)) {
+            selected = selected.filter((v) => v !== value);
+          } else {
+            selected.push(value);
+          }
+          chipsWrap.innerHTML = selected
+            .map(
+              (c) =>
+                `<span class="cp-chip" data-chip="${c}">${c} <button type="button" data-remove-chip="${c}" aria-label="Remove">×</button></span>`
+            )
+            .join("");
+          menu.querySelectorAll(".cp-dropdown-option").forEach((o) => {
+            o.classList.toggle("is-selected", selected.includes(o.dataset.value));
+          });
+          bindChipRemoves(dd);
+          return;
+        }
+
+        const valueEl = dd.querySelector(".cp-dropdown-value");
+        if (valueEl) valueEl.textContent = value;
+        if (dd.classList.contains("cp-cc-dropdown")) {
+          const flagHost = dd.querySelector(".cp-cc-flag");
+          const srcFlag = opt.querySelector(".ca-flag");
+          if (flagHost && srcFlag) flagHost.innerHTML = srcFlag.outerHTML;
+        }
+        menu.querySelectorAll(".cp-dropdown-option").forEach((o) => o.classList.remove("is-selected"));
+        opt.classList.add("is-selected");
+        closeAllCpMenus();
+      };
+    });
+
+    bindChipRemoves(dd);
+  });
+
+  bindDocSheet(root);
+
+  if (!root.dataset.cpMenusBound) {
+    root.dataset.cpMenusBound = "1";
+    root.addEventListener("click", () => closeAllCpMenus());
   }
 }
 
-function runAiProcessing() {
-  const rows = document.querySelectorAll("#aiSteps .ai-step-row");
-  if (!rows.length) return;
-  rows.forEach((r) => { r.classList.remove("active", "done"); });
-  let i = 0;
-  const tick = () => {
-    if (i > 0) rows[i - 1].classList.replace("active", "done");
-    if (i < rows.length) {
-      rows[i].classList.add("active");
-      i++;
-      setTimeout(tick, 900);
-    } else {
-      const pass = state.aiSimResult === "pass";
-      setTimeout(() => goToId(pass ? "ai-approved" : "ai-failed"), 600);
-    }
+function bindDocSheet(root) {
+  const sheet = root.querySelector("#doc-update-sheet");
+  if (!sheet) return;
+
+  let fileInput = root.querySelector("#cp-doc-file-input");
+  if (!fileInput) {
+    fileInput = document.createElement("input");
+    fileInput.type = "file";
+    fileInput.id = "cp-doc-file-input";
+    fileInput.accept = "image/*,.pdf,.doc,.docx,.png,.jpg,.jpeg";
+    fileInput.hidden = true;
+    root.appendChild(fileInput);
+  }
+
+  let pendingDocRow = null;
+
+  const pickFileFor = (row) => {
+    pendingDocRow = row;
+    fileInput.value = "";
+    fileInput.click();
   };
-  setTimeout(tick, 400);
+
+  const markDocUploaded = (row, file) => {
+    if (!row || !file) return;
+    const name = file.name || "document.pdf";
+    row.classList.remove("is-missing", "is-failed");
+    row.classList.add("is-uploaded");
+    row.setAttribute("data-open-doc-sheet", "");
+    row.setAttribute("role", "button");
+    row.setAttribute("tabindex", "0");
+    row.querySelector(".cp-doc-error")?.remove();
+
+    const meta = row.querySelector(".cp-doc-meta");
+    if (meta) {
+      let fileEl = meta.querySelector("span");
+      if (!fileEl) {
+        fileEl = document.createElement("span");
+        meta.appendChild(fileEl);
+      }
+      fileEl.textContent = name;
+    }
+
+    const badge = row.querySelector(".cp-doc-badge");
+    if (badge) {
+      badge.className = "cp-doc-badge is-ok";
+      badge.textContent = "Uploaded ✓";
+    }
+
+    const thumb = row.querySelector(".cp-doc-thumb");
+    if (thumb) {
+      thumb.className = "cp-doc-thumb";
+      if (file.type && file.type.startsWith("image/")) {
+        const url = URL.createObjectURL(file);
+        thumb.innerHTML = `<img src="${url}" alt="" />`;
+        thumb.classList.add("cp-doc-thumb-preview");
+      } else {
+        thumb.className = "cp-doc-thumb cp-doc-thumb-license";
+        thumb.innerHTML = "";
+      }
+    }
+
+    const uploadBtn = row.querySelector(".cp-doc-upload-btn");
+    if (uploadBtn) {
+      uploadBtn.outerHTML = `<span class="cp-doc-more" aria-hidden="true"><svg class="cp-ico-more" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="5" r="1.6" fill="currentColor"/><circle cx="12" cy="12" r="1.6" fill="currentColor"/><circle cx="12" cy="19" r="1.6" fill="currentColor"/></svg></span>`;
+    }
+
+    row.onclick = (ev) => {
+      ev.preventDefault();
+      ev.stopPropagation();
+      openDocSheet(row.dataset.doc);
+    };
+
+    updateDocsCta(root);
+  };
+
+  fileInput.onchange = () => {
+    const file = fileInput.files && fileInput.files[0];
+    if (file && pendingDocRow) markDocUploaded(pendingDocRow, file);
+    pendingDocRow = null;
+  };
+
+  root.querySelectorAll("[data-open-doc-sheet]").forEach((doc) => {
+    doc.onclick = (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      openDocSheet(doc.dataset.doc);
+    };
+  });
+
+  root.querySelectorAll(".cp-doc-upload-btn").forEach((btn) => {
+    btn.onclick = (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      const row = btn.closest(".cp-doc");
+      if (!row) return;
+      pickFileFor(row);
+    };
+  });
+
+  sheet.querySelectorAll("[data-sheet-close]").forEach((el) => {
+    el.onclick = (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      closeDocSheet();
+    };
+  });
+
+  sheet.querySelectorAll("[data-doc-action]").forEach((action) => {
+    action.onclick = (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      const kind = action.dataset.docAction;
+      const docId = sheet.dataset.doc;
+      const row = root.querySelector(`.cp-doc[data-doc="${docId}"]`);
+
+      if (kind === "replace" && row) {
+        closeDocSheet();
+        pickFileFor(row);
+        return;
+      }
+
+      if (kind === "delete" && row) {
+        row.classList.remove("is-uploaded", "is-failed");
+        row.classList.add("is-missing");
+        row.removeAttribute("data-open-doc-sheet");
+        row.removeAttribute("role");
+        row.removeAttribute("tabindex");
+        row.onclick = null;
+        row.querySelector(".cp-doc-error")?.remove();
+        const meta = row.querySelector(".cp-doc-meta");
+        meta?.querySelector("span")?.remove();
+        const badge = row.querySelector(".cp-doc-badge");
+        if (badge) {
+          badge.className = "cp-doc-badge is-missing-badge";
+          badge.textContent = "⚠ Missing";
+        }
+        const thumb = row.querySelector(".cp-doc-thumb");
+        if (thumb) {
+          thumb.className = "cp-doc-thumb cp-doc-thumb-missing";
+          thumb.innerHTML =
+            '<svg viewBox="0 0 40 40" aria-hidden="true"><rect x="8" y="6" width="24" height="28" rx="3" fill="#fff7ed" stroke="#fb923c" stroke-width="1.5"/><path fill="#fb923c" d="M14 14h12v2H14zm0 5h12v2H14zm0 5h8v2h-8z"/></svg>';
+        }
+        const more = row.querySelector(".cp-doc-more");
+        if (more) {
+          more.outerHTML = `<button type="button" class="cp-doc-upload-btn">Uplaod</button>`;
+        }
+        updateDocsCta(root);
+        bindDocSheet(root);
+      }
+
+      closeDocSheet();
+    };
+  });
+}
+
+const AI_DOC_META = [
+  { id: "license", label: "Pharmacy license", failReason: "This document is not valid. Please upload the correct Pharmacy license." },
+  { id: "tax", label: "Tax Card", failReason: "This document is not valid. Please upload the correct Tax Card." },
+  { id: "trade", label: "Trade Registry", failReason: "This document is not valid. Please upload the correct Trade Registry." },
+];
+
+function sleep(ms) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+function updateDocsCta(root) {
+  const cta = root.querySelector("[data-ai-verify]");
+  if (!cta) return;
+  const hasFailed = root.querySelector(".cp-doc.is-failed");
+  cta.textContent = hasFailed ? "Fix & resubmit" : "Complete Profile";
+}
+
+function setDocBanner(root, text) {
+  const banner = root.querySelector("#cp-doc-banner");
+  if (!banner) return;
+  if (!text) {
+    banner.hidden = true;
+    banner.textContent = "";
+    return;
+  }
+  banner.hidden = false;
+  banner.textContent = text;
+}
+
+function openSheet(sheet) {
+  if (!sheet) return;
+  sheet.hidden = false;
+  requestAnimationFrame(() => sheet.classList.add("is-open"));
+}
+
+function closeSheet(sheet) {
+  if (!sheet) return;
+  sheet.classList.remove("is-open");
+  sheet.hidden = true;
+}
+
+function markDocFailed(row, reason) {
+  if (!row) return;
+  row.classList.add("is-failed");
+  row.classList.remove("is-missing");
+  const badge = row.querySelector(".cp-doc-badge");
+  if (badge) {
+    badge.className = "cp-doc-badge is-fail";
+    badge.textContent = "Failed ✕";
+  }
+  row.querySelector(".cp-doc-error")?.remove();
+  const err = document.createElement("p");
+  err.className = "cp-doc-error";
+  err.textContent = reason;
+  row.insertAdjacentElement("afterend", err);
+}
+
+function clearDocFailures(root) {
+  root.querySelectorAll(".cp-doc-error").forEach((el) => el.remove());
+  root.querySelectorAll(".cp-doc.is-failed").forEach((row) => {
+    row.classList.remove("is-failed");
+    if (row.classList.contains("is-uploaded")) {
+      const badge = row.querySelector(".cp-doc-badge");
+      if (badge) {
+        badge.className = "cp-doc-badge is-ok";
+        badge.textContent = "Uploaded ✓";
+      }
+    }
+  });
+  setDocBanner(root, "");
+  updateDocsCta(root);
+}
+
+function setAiRowStatus(list, docId, status) {
+  const row = list.querySelector(`[data-ai-doc="${docId}"]`);
+  if (!row) return;
+  row.classList.remove("is-checking", "is-pass", "is-fail");
+  const statusEl = row.querySelector("[data-ai-status]");
+  if (status === "checking") {
+    row.classList.add("is-checking");
+    statusEl.innerHTML = `<span class="cp-ai-spinner"></span> Checking…`;
+  } else if (status === "pass") {
+    row.classList.add("is-pass");
+    statusEl.innerHTML = `<span class="cp-ai-ico is-pass" aria-hidden="true"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" fill="currentColor"/><path fill="#fff" d="M10.2 15.4 6.8 12l1.2-1.2 2.2 2.2 5-5 1.2 1.2-6.2 6.2Z"/></svg></span> Passed`;
+  } else if (status === "fail") {
+    row.classList.add("is-fail");
+    statusEl.innerHTML = `<span class="cp-ai-ico is-fail" aria-hidden="true"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" fill="currentColor"/><path fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" d="M8.5 8.5l7 7M15.5 8.5l-7 7"/></svg></span> Failed`;
+  } else {
+    statusEl.textContent = "Waiting";
+  }
+}
+
+async function runAiVerification(root) {
+  if (state.aiRunning) return;
+  const verifySheet = root.querySelector("#ai-verify-sheet");
+  const submittedSheet = root.querySelector("#profile-submitted-sheet");
+  const list = root.querySelector("#ai-verify-list");
+  if (!verifySheet || !list) return;
+
+  const docs = AI_DOC_META.map((meta) => ({
+    ...meta,
+    row: root.querySelector(`.cp-doc[data-doc="${meta.id}"]`),
+  }));
+
+  const missing = docs.filter((d) => !d.row || !d.row.classList.contains("is-uploaded"));
+  if (missing.length) {
+    setDocBanner(root, "Upload all documents before completing your profile.");
+    missing.forEach((d) => d.row?.classList.add("is-highlight"));
+    setTimeout(() => root.querySelectorAll(".is-highlight").forEach((el) => el.classList.remove("is-highlight")), 1200);
+    return;
+  }
+
+  state.aiRunning = true;
+  clearDocFailures(root);
+  closeDocSheet();
+  closeSheet(submittedSheet);
+  AI_DOC_META.forEach((d) => setAiRowStatus(list, d.id, "waiting"));
+  openSheet(verifySheet);
+
+  const failIds = state.aiOutcome === "fail" ? new Set(["tax"]) : new Set();
+  const failed = [];
+
+  for (const doc of docs) {
+    setAiRowStatus(list, doc.id, "checking");
+    await sleep(900);
+    if (failIds.has(doc.id)) {
+      setAiRowStatus(list, doc.id, "fail");
+      failed.push(doc);
+    } else {
+      setAiRowStatus(list, doc.id, "pass");
+    }
+  }
+
+  await sleep(650);
+
+  if (failed.length) {
+    closeSheet(verifySheet);
+    failed.forEach((doc) => markDocFailed(doc.row, doc.failReason));
+    setDocBanner(root, "Some documents are not valid. Replace them with the correct files and resubmit.");
+    updateDocsCta(root);
+    state.aiRunning = false;
+    return;
+  }
+
+  closeSheet(verifySheet);
+  openSheet(submittedSheet);
+  state.aiRunning = false;
+}
+
+function bindAiVerify() {
+  const root = document.querySelector(".screen.active .cp");
+  if (!root) return;
+
+  root.querySelectorAll("[data-ai-verify]").forEach((btn) => {
+    btn.onclick = (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      runAiVerification(root);
+    };
+  });
+
+  root.querySelectorAll("[data-ai-close]").forEach((el) => {
+    el.onclick = (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      if (state.aiRunning) return;
+      closeSheet(root.querySelector("#ai-verify-sheet"));
+    };
+  });
+
+  root.querySelectorAll("[data-submitted-close]").forEach((el) => {
+    el.onclick = (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      closeSheet(root.querySelector("#profile-submitted-sheet"));
+    };
+  });
+
+  updateDocsCta(root);
+}
+
+function bindChipRemoves(dd) {
+  dd.querySelectorAll("[data-remove-chip]").forEach((btn) => {
+    btn.onclick = (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      const chip = btn.closest("[data-chip]");
+      const value = btn.dataset.removeChip;
+      if (chip) chip.remove();
+      dd.querySelectorAll(".cp-dropdown-option").forEach((o) => {
+        if (o.dataset.value === value) o.classList.remove("is-selected");
+      });
+    };
+  });
+}
+
+function bindHomeDemo() {
+  const root = document.querySelector(".screen.active .home");
+  if (!root) return;
+
+  root.querySelectorAll("[data-demo]").forEach((el) => {
+    el.addEventListener("click", (e) => {
+      if (el.dataset.goto) return;
+      e.preventDefault();
+      root.querySelectorAll(".is-selected").forEach((n) => n.classList.remove("is-selected"));
+      el.classList.add("is-selected");
+    });
+  });
+
+  root.querySelectorAll(".home-offer-tabs button").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      root.querySelectorAll(".home-offer-tabs button").forEach((b) => b.classList.remove("is-active"));
+      btn.classList.add("is-active");
+    });
+  });
+}
+
+function bindOtpInputs() {
+  const boxes = [...document.querySelectorAll(".screen.active .otp-box")];
+  if (!boxes.length) return;
+  boxes.forEach((box, i) => {
+    box.oninput = () => {
+      box.value = box.value.replace(/\D/g, "").slice(0, 1);
+      if (box.value && i < boxes.length - 1) boxes[i + 1].focus();
+      const code = boxes.map((b) => b.value).join("");
+      if (code.length === boxes.length) goToId("home");
+    };
+    box.onkeydown = (e) => {
+      if (e.key === "Backspace" && !box.value && i > 0) boxes[i - 1].focus();
+    };
+  });
 }
 
 function goTo(index) {
   const flow = activeFlow();
   if (!flow.length) {
     state.current = 0;
-    els.flowProgress.textContent = "0 / 0";
-    els.progressFill.style.width = "0%";
+    if (els.flowProgress) els.flowProgress.textContent = "0 / 0";
+    if (els.progressFill) els.progressFill.style.width = "0%";
+    if (els.prevBtn) els.prevBtn.disabled = true;
+    if (els.nextBtn) els.nextBtn.disabled = true;
+    if (els.prevBtnSteps) els.prevBtnSteps.disabled = true;
+    if (els.nextBtnSteps) els.nextBtnSteps.disabled = true;
     renderStepsList();
     return;
   }
 
   state.current = Math.max(0, Math.min(flow.length - 1, index));
+  state.aiRunning = false;
   const step = flow[state.current];
 
   document.querySelectorAll(".screen").forEach((el) => {
-    const inFlow = state.scope === "login"
-      ? false
-      : el.dataset.flow === (state.mainMode === "ai" ? "ai" : "current");
-    el.classList.toggle("active", inFlow && el.dataset.screen === step.id);
+    el.classList.toggle("active", el.dataset.flow === state.epic && el.dataset.screen === step.id);
   });
 
-  els.flowProgress.textContent = `${state.current + 1} / ${flow.length}`;
-  els.progressFill.style.width = `${((state.current + 1) / flow.length) * 100}%`;
-  els.prevBtn.disabled = state.current === 0;
-  els.nextBtn.disabled = state.current === flow.length - 1;
+  if (els.flowProgress) els.flowProgress.textContent = `${state.current + 1} / ${flow.length}`;
+  if (els.progressFill) els.progressFill.style.width = `${((state.current + 1) / flow.length) * 100}%`;
+  if (els.prevBtn) els.prevBtn.disabled = state.current === 0;
+  if (els.nextBtn) els.nextBtn.disabled = state.current === flow.length - 1;
+  if (els.prevBtnSteps) els.prevBtnSteps.disabled = state.current === 0;
+  if (els.nextBtnSteps) els.nextBtnSteps.disabled = state.current === flow.length - 1;
   renderStepsList();
-  bindGoto();
 
-  const activeBtn = els.stepsList.querySelector("button.active");
-  if (activeBtn) activeBtn.scrollIntoView({ block: "nearest", behavior: "smooth" });
+  try {
+    bindGoto();
+  } catch (err) {
+    console.error("bindGoto failed", err);
+  }
 
-  if (state.mainMode === "current" && step.id === "loading") setTimeout(() => goTo(state.current + 1), 2000);
-  if (state.mainMode === "ai" && step.id === "ai-loading") setTimeout(() => goTo(state.current + 1), 2000);
+  if (els.panelSteps?.classList.contains("active")) {
+    const activeBtn = els.stepsList?.querySelector("button.active");
+    if (activeBtn) activeBtn.scrollIntoView({ block: "nearest", behavior: "smooth" });
+  }
+
   requestAnimationFrame(fitPhone);
 }
 
 function goToId(id) {
-  const flow = activeFlow();
-  const idx = flow.findIndex((s) => s.id === id);
-  if (idx >= 0) goTo(idx);
+  const inEpic = activeFlow().findIndex((s) => s.id === id);
+  if (inEpic >= 0) {
+    goTo(inEpic);
+    return;
+  }
+
+  // Linked screens outside the active epic step list (e.g. Log in from landing)
+  const el = document.querySelector(`.screen[data-screen="${id}"]`);
+  if (el) {
+    document.querySelectorAll(".screen").forEach((s) => s.classList.remove("active"));
+    el.classList.add("active");
+  }
 }
 
 function fitPhone() {
@@ -318,39 +742,42 @@ function bindEvents() {
   els.openSteps.addEventListener("click", () => showPanel("steps"));
   els.backToMenu.addEventListener("click", () => showPanel("menu"));
 
-  els.scopeChips.querySelectorAll(".chip").forEach((btn) => {
-    btn.addEventListener("click", () => setScope(btn.dataset.scope));
+  els.epicChips?.querySelectorAll("[data-epic]").forEach((btn) => {
+    btn.addEventListener("click", () => setEpic(btn.dataset.epic));
   });
 
-  els.viewChips.querySelectorAll("[data-view]").forEach((btn) => {
+  document.querySelectorAll("#demoBar [data-ai-outcome]").forEach((btn) => {
     btn.addEventListener("click", () => {
-      setMainMode("current", false);
-      setView(btn.dataset.view);
-      showPanel("menu");
+      state.aiOutcome = btn.dataset.aiOutcome;
+      updateChips();
     });
-  });
-
-  els.viewChips.querySelector("[data-flow='ai']").addEventListener("click", () => {
-    setScope("signup");
-    setMainMode("ai", true);
-    showPanel("menu");
   });
 
   els.btnPlay.addEventListener("click", playDemo);
   els.btnPause.addEventListener("click", pauseDemo);
   els.autoplaySpeed.addEventListener("change", setupAutoplay);
 
-  els.aiResultToggle?.querySelectorAll(".demo-result-btn").forEach((btn) => {
-    btn.addEventListener("click", () => setAiSimResult(btn.dataset.result));
-  });
-
-  els.prevBtn.addEventListener("click", () => goTo(state.current - 1));
-  els.nextBtn.addEventListener("click", () => goTo(state.current + 1));
+  els.prevBtn?.addEventListener("click", () => goTo(state.current - 1));
+  els.nextBtn?.addEventListener("click", () => goTo(state.current + 1));
+  els.prevBtnSteps?.addEventListener("click", () => goTo(state.current - 1));
+  els.nextBtnSteps?.addEventListener("click", () => goTo(state.current + 1));
 
   document.addEventListener("keydown", (e) => {
-    if (e.key === "ArrowRight") goTo(state.current + 1);
-    if (e.key === "ArrowLeft") goTo(state.current - 1);
-    if (e.key === " " && !/^(INPUT|SELECT|TEXTAREA)$/.test(document.activeElement?.tagName)) {
+    const tag = document.activeElement?.tagName;
+    const typing =
+      /^(INPUT|TEXTAREA|SELECT)$/.test(tag || "") ||
+      document.activeElement?.isContentEditable;
+    if (!typing) {
+      if (e.key === "ArrowRight") {
+        e.preventDefault();
+        goTo(state.current + 1);
+      }
+      if (e.key === "ArrowLeft") {
+        e.preventDefault();
+        goTo(state.current - 1);
+      }
+    }
+    if (e.key === " " && !typing) {
       e.preventDefault();
       if (state.isPlaying) pauseDemo();
       else playDemo();
@@ -364,15 +791,13 @@ function cacheElements() {
   els = {
     panelMenu: document.getElementById("panelMenu"),
     panelSteps: document.getElementById("panelSteps"),
-    scopeChips: document.getElementById("scopeChips"),
-    viewChips: document.getElementById("viewChips"),
-    viewSection: document.getElementById("viewSection"),
+    epicChips: document.getElementById("epicChips"),
+    stepsEpicChip: document.getElementById("stepsEpicChip"),
     scopeHint: document.getElementById("scopeHint"),
     openSteps: document.getElementById("openSteps"),
     stepCount: document.getElementById("stepCount"),
     stepsList: document.getElementById("stepsList"),
     stepsEmpty: document.getElementById("stepsEmpty"),
-    stepsScopeChip: document.getElementById("stepsScopeChip"),
     flowProgress: document.getElementById("flowProgress"),
     progressFill: document.getElementById("progressFill"),
     phoneScreen: document.getElementById("phoneScreen"),
@@ -383,9 +808,10 @@ function cacheElements() {
     btnPlay: document.getElementById("btnPlay"),
     btnPause: document.getElementById("btnPause"),
     autoplaySpeed: document.getElementById("autoplaySpeed"),
-    aiResultToggle: document.getElementById("aiResultToggle"),
     prevBtn: document.getElementById("prevBtn"),
     nextBtn: document.getElementById("nextBtn"),
+    prevBtnSteps: document.getElementById("prevBtnSteps"),
+    nextBtnSteps: document.getElementById("nextBtnSteps"),
     backToMenu: document.getElementById("backToMenu"),
   };
 }
@@ -396,10 +822,9 @@ function init() {
   mountScreens();
   bindEvents();
 
-  document.documentElement.classList.add("view-photo");
-  applyDocumentMode();
+  document.documentElement.classList.add("view-code");
+  document.documentElement.classList.remove("view-photo", "mode-ai");
   updateChips();
-  updateAiResultButtons();
   goTo(0);
   fitPhone();
   updatePlayState();

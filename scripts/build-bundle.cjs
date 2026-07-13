@@ -9,11 +9,9 @@ const root = path.join(__dirname, "..");
 
 const files = [
   "js/templates/signup-templates.js",
-  "js/templates/ai-templates.js",
   "js/config/scopes.js",
   "js/data/signup-screens.js",
   "js/data/login-screens.js",
-  "js/data/ai-screens.js",
   "js/components/shell.js",
   "js/app.js",
 ];
