@@ -93,8 +93,9 @@ const docUpdateSheet = `
             </button>
           </div>
         </div>
-      </div>
+      </div>`;
 
+const aiSubmitSheets = `
       <div class="cp-sheet cp-sheet-ai" id="ai-verify-sheet" hidden>
         <button type="button" class="cp-sheet-backdrop" data-ai-close aria-label="Dismiss"></button>
         <div class="cp-sheet-panel" role="dialog" aria-modal="true" aria-labelledby="ai-verify-title">
@@ -136,6 +137,25 @@ const docUpdateSheet = `
           </div>
           <p class="cp-submitted-copy">Your pharmacy profile has been submitted for verification. We'll notify you once it's reviewed.</p>
           <button type="button" class="ca-cta cp-cta" data-goto="home">Go to Home</button>
+        </div>
+      </div>
+
+      <div class="cp-sheet cp-sheet-locked" id="account-locked-sheet" hidden>
+        <button type="button" class="cp-sheet-backdrop" data-locked-close aria-label="Dismiss"></button>
+        <div class="cp-sheet-panel" role="dialog" aria-modal="true" aria-labelledby="account-locked-title">
+          <div class="cp-sheet-handle" aria-hidden="true"></div>
+          <div class="cp-sheet-head">
+            <button type="button" class="cp-sheet-close" data-locked-close aria-label="Close">${iconClose}</button>
+            <h2 id="account-locked-title">We'll help you finish</h2>
+            <span class="cp-sheet-head-spacer"></span>
+          </div>
+          <div class="cp-locked-hero" aria-hidden="true">
+            <div class="cp-locked-mark">
+              <svg viewBox="0 0 72 72" aria-hidden="true"><circle cx="36" cy="36" r="28" fill="#fff7ed"/><path fill="none" stroke="#ea580c" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round" d="M28 34v-6a8 8 0 0 1 16 0v6"/><rect x="24" y="34" width="24" height="18" rx="4" fill="#ea580c"/><circle cx="36" cy="43" r="2.4" fill="#fff"/></svg>
+            </div>
+          </div>
+          <p class="cp-submitted-copy">We couldn’t verify your documents after a few tries, so uploads are paused for safety. Our support team will contact you soon to help complete your pharmacy profile.</p>
+          <button type="button" class="ca-cta cp-cta" data-locked-close>Got it</button>
         </div>
       </div>`;
 
@@ -354,7 +374,7 @@ const codeTemplates = {
     </div>`,
 
   home: `
-    <div class="home">
+    <div class="home is-catalog-locked">
       <div class="home-scroll">
         <div class="home-status">
           <span>9:41</span>
@@ -380,7 +400,7 @@ const codeTemplates = {
           </button>
         </header>
 
-        <button type="button" class="home-profile-card" data-goto="complete-info" data-demo="complete-profile">
+        <button type="button" class="home-profile-card" data-goto="my-pharmacy" data-demo="complete-profile">
           <div class="home-profile-top">
             <div>
               <strong>Complete your profile</strong>
@@ -394,6 +414,8 @@ const codeTemplates = {
         <button type="button" class="home-banner" data-demo="pulse-banner">
           <img src="scr/new-sign-up/home-assets/banner.png" alt="Pulse promo" />
         </button>
+
+        <p class="home-lock-note">Complete your pharmacy profile to unlock prices, brands, and supplier details.</p>
 
         <section class="home-section">
           <div class="home-section-head">
@@ -538,9 +560,88 @@ const codeTemplates = {
       </nav>
     </div>`,
 
+  "my-pharmacy": `
+    <div class="mp">
+      <div class="mp-hero">
+        <div class="mp-status">
+          <span>9:41</span>
+          <span class="home-status-icons" aria-hidden="true">
+            <svg viewBox="0 0 18 12"><rect x="0.5" y="7" width="3" height="4.5" rx="0.6" fill="currentColor"/><rect x="5" y="5" width="3" height="6.5" rx="0.6" fill="currentColor"/><rect x="9.5" y="2.5" width="3" height="9" rx="0.6" fill="currentColor"/><rect x="14" y="0.5" width="3" height="11" rx="0.6" fill="currentColor"/></svg>
+            <svg viewBox="0 0 16 12"><path fill="currentColor" d="M8 3.2c1.9 0 3.6.7 4.9 1.9l-1.2 1.2A5.3 5.3 0 0 0 8 4.8c-1.4 0-2.7.5-3.7 1.5L3.1 5.1A7.2 7.2 0 0 1 8 3.2Zm0 3.2c1 0 1.9.4 2.6 1l-1.2 1.2A2.2 2.2 0 0 0 8 8c-.6 0-1.1.2-1.5.6L5.3 7.4A3.8 3.8 0 0 1 8 6.4Zm0 3.1a1.3 1.3 0 1 1 0 2.6 1.3 1.3 0 0 1 0-2.6Z"/></svg>
+            <svg viewBox="0 0 25 12"><rect x="0.6" y="1.2" width="19.5" height="9.6" rx="2.2" fill="none" stroke="currentColor" stroke-width="1.3"/><rect x="2.2" y="2.8" width="15" height="6.4" rx="1.2" fill="currentColor"/><path fill="currentColor" d="M21.2 4.1h1.4a1.6 1.6 0 0 1 0 3.8h-1.4V4.1Z"/></svg>
+          </span>
+        </div>
+        <div class="mp-topbar">
+          <button type="button" class="mp-back" data-goto="home" aria-label="Back">${iconBack}</button>
+          <h1>My Pharmacy</h1>
+          <span class="mp-topbar-spacer"></span>
+        </div>
+
+        <div class="mp-pharmacy-card">
+          <div class="mp-pharm-ico" aria-hidden="true">
+            <svg viewBox="0 0 32 32"><rect x="6" y="12" width="20" height="14" rx="2" fill="none" stroke="currentColor" stroke-width="1.8"/><path fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" d="M10 12V9a6 6 0 0 1 12 0v3"/><circle cx="16" cy="19" r="3.2" fill="none" stroke="currentColor" stroke-width="1.6"/><path fill="none" stroke="currentColor" stroke-width="1.6" d="M16 17.2v3.6M14.2 19h3.6"/></svg>
+          </div>
+          <div class="mp-pharm-meta">
+            <strong>Pharmacy Name</strong>
+            <span><svg class="mp-pin" viewBox="0 0 16 16" aria-hidden="true"><path fill="currentColor" d="M8 1.5a4.5 4.5 0 0 0-4.5 4.5c0 3.2 4 8 4.2 8.3a.4.4 0 0 0 .6 0C8.5 14 12.5 9.2 12.5 6A4.5 4.5 0 0 0 8 1.5Zm0 6.2A1.7 1.7 0 1 1 8 4.3a1.7 1.7 0 0 1 0 3.4Z"/></svg> Cairo, Nasr City</span>
+          </div>
+          <span class="mp-badge is-incomplete">Incomplete</span>
+        </div>
+      </div>
+
+      <div class="mp-body">
+        <button type="button" class="mp-progress" data-goto="complete-location">
+          <div class="mp-ring" style="--p:31" aria-hidden="true"><span>31%</span></div>
+          <div class="mp-progress-copy">
+            <strong>Complete pharmacy profile</strong>
+            <span>31% completed · 2 step left</span>
+          </div>
+          <span class="mp-continue">Continue ›</span>
+        </button>
+
+        <div class="mp-list">
+          <button type="button" class="mp-row" data-goto="complete-info">
+            <div class="mp-row-ico is-teal" aria-hidden="true">
+              <svg viewBox="0 0 24 24"><rect x="4" y="9" width="16" height="11" rx="1.6" fill="none" stroke="currentColor" stroke-width="1.7"/><path fill="none" stroke="currentColor" stroke-width="1.7" d="M8 9V7a4 4 0 0 1 8 0v2"/><circle cx="12" cy="14.5" r="2.2" fill="none" stroke="currentColor" stroke-width="1.5"/><path fill="none" stroke="currentColor" stroke-width="1.5" d="M12 13.2v2.6M10.7 14.5h2.6"/></svg>
+            </div>
+            <div class="mp-row-meta">
+              <strong>Pharmacy information</strong>
+              <span>Basic, legal and contact details</span>
+            </div>
+            <span class="mp-status is-done">${iconTabCheck}<em>Done</em></span>
+            <span class="mp-chevron" aria-hidden="true">${iconChevron}</span>
+          </button>
+
+          <button type="button" class="mp-row" data-goto="complete-location">
+            <div class="mp-row-ico is-orange" aria-hidden="true">
+              <svg viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-width="1.7" d="M12 3.5a5.5 5.5 0 0 0-5.5 5.5c0 4 5 10 5.2 10.3a.4.4 0 0 0 .6 0C12.5 19 17.5 13 17.5 9A5.5 5.5 0 0 0 12 3.5Z"/><circle cx="12" cy="9" r="2.1" fill="none" stroke="currentColor" stroke-width="1.5"/></svg>
+            </div>
+            <div class="mp-row-meta">
+              <strong>Location &amp; Address</strong>
+              <span>GPS location and address details</span>
+            </div>
+            <span class="mp-status is-pending"><svg viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="6.2" fill="none" stroke="currentColor" stroke-width="1.5"/><path fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" d="M8 4.8V8l2.2 1.4"/></svg><em>Pending</em></span>
+            <span class="mp-chevron" aria-hidden="true">${iconChevron}</span>
+          </button>
+
+          <button type="button" class="mp-row" data-goto="complete-documents">
+            <div class="mp-row-ico is-orange" aria-hidden="true">
+              <svg viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round" d="M7 3.5h7.5L18.5 7.5V20a1 1 0 0 1-1 1H7a1 1 0 0 1-1-1V4.5a1 1 0 0 1 1-1Z"/><path fill="none" stroke="currentColor" stroke-width="1.5" d="M9 11h6M9 14.5h6"/></svg>
+            </div>
+            <div class="mp-row-meta">
+              <strong>Documents</strong>
+              <span>License, tax card, trade registry</span>
+            </div>
+            <span class="mp-status is-pending"><svg viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="6.2" fill="none" stroke="currentColor" stroke-width="1.5"/><path fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" d="M8 4.8V8l2.2 1.4"/></svg><em>Pending</em></span>
+            <span class="mp-chevron" aria-hidden="true">${iconChevron}</span>
+          </button>
+        </div>
+      </div>
+    </div>`,
+
   "complete-info": cpShell({
     activeTab: 1,
-    backGoto: "home",
+    backGoto: "my-pharmacy",
     body: `
         <h2 class="cp-section">Pharmacy Information</h2>
 
@@ -607,46 +708,6 @@ const codeTemplates = {
     footer: `<button type="button" class="ca-cta cp-cta" data-goto="complete-location">Save &amp; Continue</button>`,
   }),
 
-  "complete-documents": cpShell({
-    activeTab: 3,
-    backGoto: "complete-location-details",
-    body: `
-        <h2 class="cp-section">Pharmacy Documents</h2>
-
-        <div class="cp-doc is-uploaded" data-doc="license" data-open-doc-sheet role="button" tabindex="0">
-          <div class="cp-doc-thumb cp-doc-thumb-license" aria-hidden="true"></div>
-          <div class="cp-doc-meta">
-            <strong>Pharmacy license</strong>
-            <span>license.pdf</span>
-          </div>
-          <span class="cp-doc-badge is-ok">Uploaded ✓</span>
-          <span class="cp-doc-more" aria-hidden="true">${iconMore}</span>
-        </div>
-
-        <div class="cp-doc is-uploaded" data-doc="tax" data-open-doc-sheet role="button" tabindex="0">
-          <div class="cp-doc-thumb cp-doc-thumb-tax" aria-hidden="true"></div>
-          <div class="cp-doc-meta">
-            <strong>Tax Card</strong>
-            <span>Tax Card.png</span>
-          </div>
-          <span class="cp-doc-badge is-ok">Uploaded ✓</span>
-          <span class="cp-doc-more" aria-hidden="true">${iconMore}</span>
-        </div>
-
-        <div class="cp-doc is-uploaded" data-doc="trade" data-open-doc-sheet role="button" tabindex="0">
-          <div class="cp-doc-thumb cp-doc-thumb-license" aria-hidden="true"></div>
-          <div class="cp-doc-meta">
-            <strong>Trade Registry</strong>
-            <span>trade-registry.pdf</span>
-          </div>
-          <span class="cp-doc-badge is-ok">Uploaded ✓</span>
-          <span class="cp-doc-more" aria-hidden="true">${iconMore}</span>
-        </div>
-        <p class="cp-doc-banner" id="cp-doc-banner" hidden></p>`,
-    footer: `<button type="button" class="ca-cta cp-cta" data-ai-verify>Complete Profile</button>`,
-    overlay: docUpdateSheet,
-  }),
-
   "complete-location": cpShell({
     activeTab: 2,
     backGoto: "complete-info",
@@ -706,6 +767,46 @@ const codeTemplates = {
         </label>`,
     footer: `<button type="button" class="ca-cta cp-cta" data-goto="complete-documents">Save &amp; Continue</button>`,
   }),
+
+  "complete-documents": cpShell({
+    activeTab: 3,
+    backGoto: "complete-location-details",
+    body: `
+        <h2 class="cp-section">Pharmacy Documents</h2>
+
+        <div class="cp-doc is-uploaded" data-doc="license" data-open-doc-sheet role="button" tabindex="0">
+          <div class="cp-doc-thumb cp-doc-thumb-license" aria-hidden="true"></div>
+          <div class="cp-doc-meta">
+            <strong>Pharmacy license</strong>
+            <span>license.pdf</span>
+          </div>
+          <span class="cp-doc-badge is-ok">Uploaded ✓</span>
+          <span class="cp-doc-more" aria-hidden="true">${iconMore}</span>
+        </div>
+
+        <div class="cp-doc is-uploaded" data-doc="tax" data-open-doc-sheet role="button" tabindex="0">
+          <div class="cp-doc-thumb cp-doc-thumb-tax" aria-hidden="true"></div>
+          <div class="cp-doc-meta">
+            <strong>Tax Card</strong>
+            <span>Tax Card.png</span>
+          </div>
+          <span class="cp-doc-badge is-ok">Uploaded ✓</span>
+          <span class="cp-doc-more" aria-hidden="true">${iconMore}</span>
+        </div>
+
+        <div class="cp-doc is-uploaded" data-doc="trade" data-open-doc-sheet role="button" tabindex="0">
+          <div class="cp-doc-thumb cp-doc-thumb-license" aria-hidden="true"></div>
+          <div class="cp-doc-meta">
+            <strong>Trade Registry</strong>
+            <span>trade-registry.pdf</span>
+          </div>
+          <span class="cp-doc-badge is-ok">Uploaded ✓</span>
+          <span class="cp-doc-more" aria-hidden="true">${iconMore}</span>
+        </div>
+        <p class="cp-doc-banner" id="cp-doc-banner" hidden></p>`,
+    footer: `<button type="button" class="ca-cta cp-cta" data-ai-verify>Complete Profile</button>`,
+    overlay: `${docUpdateSheet}${aiSubmitSheets}`,
+  }),
 };
 
 
@@ -753,6 +854,13 @@ const signupScreens = [
     label: "Home",
     scope: "signup",
     group: "App",
+  },
+  {
+    id: "my-pharmacy",
+    label: "My Pharmacy",
+    short: "My Pharmacy",
+    scope: "signup",
+    group: "Complete profile",
   },
   {
     id: "complete-info",
@@ -918,7 +1026,12 @@ const state = {
   autoplayTimer: null,
   aiOutcome: "pass",
   aiRunning: false,
+  profileComplete: false,
+  verifyFailCount: 0,
+  accountLocked: false,
 };
+
+const MAX_VERIFY_FAILS = 2;
 
 let els = {};
 
@@ -1166,6 +1279,7 @@ function closeDocSheet() {
 }
 
 function openDocSheet(docId) {
+  if (state.accountLocked) return;
   const sheet = document.querySelector(".screen.active #doc-update-sheet");
   if (!sheet) return;
   closeAllCpMenus();
@@ -1267,6 +1381,9 @@ function bindDocSheet(root) {
     fileInput.click();
   };
 
+  const missingBadgeHtml =
+    `<span class="cp-doc-badge is-missing-badge"><svg class="cp-doc-badge-ico" viewBox="0 0 16 16" aria-hidden="true"><path fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round" d="M8 2.2 14.2 13.4H1.8L8 2.2Z"/><path fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" d="M8 6.2v3.2M8 11.4h.01"/></svg>Missing</span>`;
+
   const markDocUploaded = (row, file) => {
     if (!row || !file) return;
     const name = file.name || "document.pdf";
@@ -1279,7 +1396,8 @@ function bindDocSheet(root) {
 
     const meta = row.querySelector(".cp-doc-meta");
     if (meta) {
-      let fileEl = meta.querySelector("span");
+      meta.querySelector(".cp-doc-badge")?.remove();
+      let fileEl = meta.querySelector("span:not(.cp-doc-badge)");
       if (!fileEl) {
         fileEl = document.createElement("span");
         meta.appendChild(fileEl);
@@ -1287,11 +1405,15 @@ function bindDocSheet(root) {
       fileEl.textContent = name;
     }
 
-    const badge = row.querySelector(".cp-doc-badge");
-    if (badge) {
-      badge.className = "cp-doc-badge is-ok";
-      badge.textContent = "Uploaded ✓";
+    let badge = row.querySelector(":scope > .cp-doc-badge");
+    if (!badge) {
+      badge = document.createElement("span");
+      const uploadOrMore = row.querySelector(".cp-doc-upload-btn, .cp-doc-more");
+      if (uploadOrMore) row.insertBefore(badge, uploadOrMore);
+      else row.appendChild(badge);
     }
+    badge.className = "cp-doc-badge is-ok";
+    badge.textContent = "Uploaded ✓";
 
     const thumb = row.querySelector(".cp-doc-thumb");
     if (thumb) {
@@ -1374,13 +1496,10 @@ function bindDocSheet(root) {
         row.removeAttribute("tabindex");
         row.onclick = null;
         row.querySelector(".cp-doc-error")?.remove();
+        row.querySelectorAll(".cp-doc-badge").forEach((el) => el.remove());
         const meta = row.querySelector(".cp-doc-meta");
-        meta?.querySelector("span")?.remove();
-        const badge = row.querySelector(".cp-doc-badge");
-        if (badge) {
-          badge.className = "cp-doc-badge is-missing-badge";
-          badge.textContent = "⚠ Missing";
-        }
+        meta?.querySelectorAll("span:not(.cp-doc-badge)").forEach((el) => el.remove());
+        if (meta) meta.insertAdjacentHTML("beforeend", missingBadgeHtml);
         const thumb = row.querySelector(".cp-doc-thumb");
         if (thumb) {
           thumb.className = "cp-doc-thumb cp-doc-thumb-missing";
@@ -1389,7 +1508,7 @@ function bindDocSheet(root) {
         }
         const more = row.querySelector(".cp-doc-more");
         if (more) {
-          more.outerHTML = `<button type="button" class="cp-doc-upload-btn">Uplaod</button>`;
+          more.outerHTML = `<button type="button" class="cp-doc-upload-btn">Upload</button>`;
         }
         updateDocsCta(root);
         bindDocSheet(root);
@@ -1413,20 +1532,61 @@ function sleep(ms) {
 function updateDocsCta(root) {
   const cta = root.querySelector("[data-ai-verify]");
   if (!cta) return;
+  if (state.accountLocked) {
+    cta.textContent = "Support will contact you";
+    cta.disabled = true;
+    cta.classList.add("is-muted");
+    return;
+  }
+  cta.disabled = false;
+  cta.classList.remove("is-muted");
   const hasFailed = root.querySelector(".cp-doc.is-failed");
   cta.textContent = hasFailed ? "Fix & resubmit" : "Complete Profile";
 }
 
-function setDocBanner(root, text) {
+function setDocBanner(root, text, locked = false) {
   const banner = root.querySelector("#cp-doc-banner");
   if (!banner) return;
   if (!text) {
     banner.hidden = true;
     banner.textContent = "";
+    banner.classList.remove("is-locked");
     return;
   }
   banner.hidden = false;
   banner.textContent = text;
+  banner.classList.toggle("is-locked", locked);
+}
+
+function lockAccount(docsRoot) {
+  state.accountLocked = true;
+  const root =
+    docsRoot ||
+    document.querySelector('.screen[data-screen="complete-documents"] .cp') ||
+    document.querySelector(".screen.active .cp");
+  if (root) {
+    root.classList.add("is-account-locked");
+    setDocBanner(
+      root,
+      "Uploads paused. Our support team will contact you soon to help finish verification.",
+      true
+    );
+    updateDocsCta(root);
+    closeDocSheet();
+    openSheet(root.querySelector("#account-locked-sheet"));
+  }
+}
+
+function applyAccountLockUI() {
+  const root = document.querySelector('.screen[data-screen="complete-documents"] .cp');
+  if (!root || !state.accountLocked) return;
+  root.classList.add("is-account-locked");
+  setDocBanner(
+    root,
+    "Uploads paused. Our support team will contact you soon to help finish verification.",
+    true
+  );
+  updateDocsCta(root);
 }
 
 function openSheet(sheet) {
@@ -1493,29 +1653,38 @@ function setAiRowStatus(list, docId, status) {
 }
 
 async function runAiVerification(root) {
-  if (state.aiRunning) return;
+  if (state.aiRunning || state.accountLocked) return;
   const verifySheet = root.querySelector("#ai-verify-sheet");
   const submittedSheet = root.querySelector("#profile-submitted-sheet");
+  const lockedSheet = root.querySelector("#account-locked-sheet");
   const list = root.querySelector("#ai-verify-list");
   if (!verifySheet || !list) return;
 
+  const docsRoot =
+    document.querySelector('.screen[data-screen="complete-documents"] .cp') || root;
+
   const docs = AI_DOC_META.map((meta) => ({
     ...meta,
-    row: root.querySelector(`.cp-doc[data-doc="${meta.id}"]`),
+    row: docsRoot.querySelector(`.cp-doc[data-doc="${meta.id}"]`),
   }));
 
   const missing = docs.filter((d) => !d.row || !d.row.classList.contains("is-uploaded"));
   if (missing.length) {
-    setDocBanner(root, "Upload all documents before completing your profile.");
-    missing.forEach((d) => d.row?.classList.add("is-highlight"));
-    setTimeout(() => root.querySelectorAll(".is-highlight").forEach((el) => el.classList.remove("is-highlight")), 1200);
+    goToId("complete-documents");
+    requestAnimationFrame(() => {
+      const activeDocs = document.querySelector(".screen.active .cp") || docsRoot;
+      setDocBanner(activeDocs, "Upload all documents before completing your profile.");
+      missing.forEach((d) => d.row?.classList.add("is-highlight"));
+      setTimeout(() => activeDocs.querySelectorAll(".is-highlight").forEach((el) => el.classList.remove("is-highlight")), 1200);
+    });
     return;
   }
 
   state.aiRunning = true;
-  clearDocFailures(root);
+  clearDocFailures(docsRoot);
   closeDocSheet();
   closeSheet(submittedSheet);
+  closeSheet(lockedSheet);
   AI_DOC_META.forEach((d) => setAiRowStatus(list, d.id, "waiting"));
   openSheet(verifySheet);
 
@@ -1537,26 +1706,84 @@ async function runAiVerification(root) {
 
   if (failed.length) {
     closeSheet(verifySheet);
+    state.verifyFailCount += 1;
     failed.forEach((doc) => markDocFailed(doc.row, doc.failReason));
-    setDocBanner(root, "Some documents are not valid. Replace them with the correct files and resubmit.");
-    updateDocsCta(root);
     state.aiRunning = false;
+    goToId("complete-documents");
+
+    if (state.verifyFailCount > MAX_VERIFY_FAILS) {
+      requestAnimationFrame(() => {
+        const activeDocs =
+          document.querySelector(".screen.active .cp") ||
+          document.querySelector('.screen[data-screen="complete-documents"] .cp') ||
+          docsRoot;
+        lockAccount(activeDocs);
+      });
+      return;
+    }
+
+    const activeDocs =
+      document.querySelector(".screen.active .cp") ||
+      document.querySelector('.screen[data-screen="complete-documents"] .cp') ||
+      docsRoot;
+    if (state.verifyFailCount === 2) {
+      setDocBanner(
+        activeDocs,
+        "Some documents are not valid. Replace them and resubmit before your account is locked."
+      );
+    } else {
+      setDocBanner(
+        activeDocs,
+        "Some documents are not valid. Replace them with the correct files and resubmit."
+      );
+    }
+    updateDocsCta(activeDocs);
     return;
   }
 
   closeSheet(verifySheet);
   openSheet(submittedSheet);
+  state.profileComplete = true;
+  state.verifyFailCount = 0;
+  syncHomeCatalogLock();
   state.aiRunning = false;
+}
+
+function syncHomeCatalogLock() {
+  const home = document.querySelector('.screen[data-screen="home"] .home');
+  if (!home) return;
+  home.classList.toggle("is-catalog-locked", !state.profileComplete);
+}
+
+function bindHomeCatalogLock() {
+  const home = document.querySelector(".screen.active .home");
+  if (!home) return;
+  syncHomeCatalogLock();
+  if (!home.classList.contains("is-catalog-locked")) return;
+
+  home.querySelectorAll(".home-product-card, .home-brand, .home-offer-row").forEach((el) => {
+    el.onclick = (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      goToId("my-pharmacy");
+    };
+  });
 }
 
 function bindAiVerify() {
   const root = document.querySelector(".screen.active .cp");
   if (!root) return;
 
+  applyAccountLockUI();
+
   root.querySelectorAll("[data-ai-verify]").forEach((btn) => {
     btn.onclick = (e) => {
       e.preventDefault();
       e.stopPropagation();
+      if (state.accountLocked) {
+        openSheet(root.querySelector("#account-locked-sheet"));
+        return;
+      }
       runAiVerification(root);
     };
   });
@@ -1575,6 +1802,14 @@ function bindAiVerify() {
       e.preventDefault();
       e.stopPropagation();
       closeSheet(root.querySelector("#profile-submitted-sheet"));
+    };
+  });
+
+  root.querySelectorAll("[data-locked-close]").forEach((el) => {
+    el.onclick = (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      closeSheet(root.querySelector("#account-locked-sheet"));
     };
   });
 
@@ -1667,6 +1902,14 @@ function goTo(index) {
     bindGoto();
   } catch (err) {
     console.error("bindGoto failed", err);
+  }
+
+  if (step.id === "home") {
+    try {
+      bindHomeCatalogLock();
+    } catch (err) {
+      console.error("bindHomeCatalogLock failed", err);
+    }
   }
 
   if (els.panelSteps?.classList.contains("active")) {

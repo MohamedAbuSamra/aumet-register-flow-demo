@@ -25,6 +25,13 @@ export const signupScreens = [
     group: "App",
   },
   {
+    id: "my-pharmacy",
+    label: "My Pharmacy",
+    short: "My Pharmacy",
+    scope: "signup",
+    group: "Complete profile",
+  },
+  {
     id: "complete-info",
     label: "Profile · Information",
     scope: "signup",

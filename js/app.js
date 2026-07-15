@@ -16,7 +16,12 @@ const state = {
   autoplayTimer: null,
   aiOutcome: "pass",
   aiRunning: false,
+  profileComplete: false,
+  verifyFailCount: 0,
+  accountLocked: false,
 };
+
+const MAX_VERIFY_FAILS = 2;
 
 let els = {};
 
@@ -264,6 +269,7 @@ function closeDocSheet() {
 }
 
 function openDocSheet(docId) {
+  if (state.accountLocked) return;
   const sheet = document.querySelector(".screen.active #doc-update-sheet");
   if (!sheet) return;
   closeAllCpMenus();
@@ -365,6 +371,9 @@ function bindDocSheet(root) {
     fileInput.click();
   };
 
+  const missingBadgeHtml =
+    `<span class="cp-doc-badge is-missing-badge"><svg class="cp-doc-badge-ico" viewBox="0 0 16 16" aria-hidden="true"><path fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round" d="M8 2.2 14.2 13.4H1.8L8 2.2Z"/><path fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" d="M8 6.2v3.2M8 11.4h.01"/></svg>Missing</span>`;
+
   const markDocUploaded = (row, file) => {
     if (!row || !file) return;
     const name = file.name || "document.pdf";
@@ -377,7 +386,8 @@ function bindDocSheet(root) {
 
     const meta = row.querySelector(".cp-doc-meta");
     if (meta) {
-      let fileEl = meta.querySelector("span");
+      meta.querySelector(".cp-doc-badge")?.remove();
+      let fileEl = meta.querySelector("span:not(.cp-doc-badge)");
       if (!fileEl) {
         fileEl = document.createElement("span");
         meta.appendChild(fileEl);
@@ -385,11 +395,15 @@ function bindDocSheet(root) {
       fileEl.textContent = name;
     }
 
-    const badge = row.querySelector(".cp-doc-badge");
-    if (badge) {
-      badge.className = "cp-doc-badge is-ok";
-      badge.textContent = "Uploaded ✓";
+    let badge = row.querySelector(":scope > .cp-doc-badge");
+    if (!badge) {
+      badge = document.createElement("span");
+      const uploadOrMore = row.querySelector(".cp-doc-upload-btn, .cp-doc-more");
+      if (uploadOrMore) row.insertBefore(badge, uploadOrMore);
+      else row.appendChild(badge);
     }
+    badge.className = "cp-doc-badge is-ok";
+    badge.textContent = "Uploaded ✓";
 
     const thumb = row.querySelector(".cp-doc-thumb");
     if (thumb) {
@@ -472,13 +486,10 @@ function bindDocSheet(root) {
         row.removeAttribute("tabindex");
         row.onclick = null;
         row.querySelector(".cp-doc-error")?.remove();
+        row.querySelectorAll(".cp-doc-badge").forEach((el) => el.remove());
         const meta = row.querySelector(".cp-doc-meta");
-        meta?.querySelector("span")?.remove();
-        const badge = row.querySelector(".cp-doc-badge");
-        if (badge) {
-          badge.className = "cp-doc-badge is-missing-badge";
-          badge.textContent = "⚠ Missing";
-        }
+        meta?.querySelectorAll("span:not(.cp-doc-badge)").forEach((el) => el.remove());
+        if (meta) meta.insertAdjacentHTML("beforeend", missingBadgeHtml);
         const thumb = row.querySelector(".cp-doc-thumb");
         if (thumb) {
           thumb.className = "cp-doc-thumb cp-doc-thumb-missing";
@@ -487,7 +498,7 @@ function bindDocSheet(root) {
         }
         const more = row.querySelector(".cp-doc-more");
         if (more) {
-          more.outerHTML = `<button type="button" class="cp-doc-upload-btn">Uplaod</button>`;
+          more.outerHTML = `<button type="button" class="cp-doc-upload-btn">Upload</button>`;
         }
         updateDocsCta(root);
         bindDocSheet(root);
@@ -511,20 +522,61 @@ function sleep(ms) {
 function updateDocsCta(root) {
   const cta = root.querySelector("[data-ai-verify]");
   if (!cta) return;
+  if (state.accountLocked) {
+    cta.textContent = "Support will contact you";
+    cta.disabled = true;
+    cta.classList.add("is-muted");
+    return;
+  }
+  cta.disabled = false;
+  cta.classList.remove("is-muted");
   const hasFailed = root.querySelector(".cp-doc.is-failed");
   cta.textContent = hasFailed ? "Fix & resubmit" : "Complete Profile";
 }
 
-function setDocBanner(root, text) {
+function setDocBanner(root, text, locked = false) {
   const banner = root.querySelector("#cp-doc-banner");
   if (!banner) return;
   if (!text) {
     banner.hidden = true;
     banner.textContent = "";
+    banner.classList.remove("is-locked");
     return;
   }
   banner.hidden = false;
   banner.textContent = text;
+  banner.classList.toggle("is-locked", locked);
+}
+
+function lockAccount(docsRoot) {
+  state.accountLocked = true;
+  const root =
+    docsRoot ||
+    document.querySelector('.screen[data-screen="complete-documents"] .cp') ||
+    document.querySelector(".screen.active .cp");
+  if (root) {
+    root.classList.add("is-account-locked");
+    setDocBanner(
+      root,
+      "Uploads paused. Our support team will contact you soon to help finish verification.",
+      true
+    );
+    updateDocsCta(root);
+    closeDocSheet();
+    openSheet(root.querySelector("#account-locked-sheet"));
+  }
+}
+
+function applyAccountLockUI() {
+  const root = document.querySelector('.screen[data-screen="complete-documents"] .cp');
+  if (!root || !state.accountLocked) return;
+  root.classList.add("is-account-locked");
+  setDocBanner(
+    root,
+    "Uploads paused. Our support team will contact you soon to help finish verification.",
+    true
+  );
+  updateDocsCta(root);
 }
 
 function openSheet(sheet) {
@@ -591,29 +643,38 @@ function setAiRowStatus(list, docId, status) {
 }
 
 async function runAiVerification(root) {
-  if (state.aiRunning) return;
+  if (state.aiRunning || state.accountLocked) return;
   const verifySheet = root.querySelector("#ai-verify-sheet");
   const submittedSheet = root.querySelector("#profile-submitted-sheet");
+  const lockedSheet = root.querySelector("#account-locked-sheet");
   const list = root.querySelector("#ai-verify-list");
   if (!verifySheet || !list) return;
 
+  const docsRoot =
+    document.querySelector('.screen[data-screen="complete-documents"] .cp') || root;
+
   const docs = AI_DOC_META.map((meta) => ({
     ...meta,
-    row: root.querySelector(`.cp-doc[data-doc="${meta.id}"]`),
+    row: docsRoot.querySelector(`.cp-doc[data-doc="${meta.id}"]`),
   }));
 
   const missing = docs.filter((d) => !d.row || !d.row.classList.contains("is-uploaded"));
   if (missing.length) {
-    setDocBanner(root, "Upload all documents before completing your profile.");
-    missing.forEach((d) => d.row?.classList.add("is-highlight"));
-    setTimeout(() => root.querySelectorAll(".is-highlight").forEach((el) => el.classList.remove("is-highlight")), 1200);
+    goToId("complete-documents");
+    requestAnimationFrame(() => {
+      const activeDocs = document.querySelector(".screen.active .cp") || docsRoot;
+      setDocBanner(activeDocs, "Upload all documents before completing your profile.");
+      missing.forEach((d) => d.row?.classList.add("is-highlight"));
+      setTimeout(() => activeDocs.querySelectorAll(".is-highlight").forEach((el) => el.classList.remove("is-highlight")), 1200);
+    });
     return;
   }
 
   state.aiRunning = true;
-  clearDocFailures(root);
+  clearDocFailures(docsRoot);
   closeDocSheet();
   closeSheet(submittedSheet);
+  closeSheet(lockedSheet);
   AI_DOC_META.forEach((d) => setAiRowStatus(list, d.id, "waiting"));
   openSheet(verifySheet);
 
@@ -635,26 +696,84 @@ async function runAiVerification(root) {
 
   if (failed.length) {
     closeSheet(verifySheet);
+    state.verifyFailCount += 1;
     failed.forEach((doc) => markDocFailed(doc.row, doc.failReason));
-    setDocBanner(root, "Some documents are not valid. Replace them with the correct files and resubmit.");
-    updateDocsCta(root);
     state.aiRunning = false;
+    goToId("complete-documents");
+
+    if (state.verifyFailCount > MAX_VERIFY_FAILS) {
+      requestAnimationFrame(() => {
+        const activeDocs =
+          document.querySelector(".screen.active .cp") ||
+          document.querySelector('.screen[data-screen="complete-documents"] .cp') ||
+          docsRoot;
+        lockAccount(activeDocs);
+      });
+      return;
+    }
+
+    const activeDocs =
+      document.querySelector(".screen.active .cp") ||
+      document.querySelector('.screen[data-screen="complete-documents"] .cp') ||
+      docsRoot;
+    if (state.verifyFailCount === 2) {
+      setDocBanner(
+        activeDocs,
+        "Some documents are not valid. Replace them and resubmit before your account is locked."
+      );
+    } else {
+      setDocBanner(
+        activeDocs,
+        "Some documents are not valid. Replace them with the correct files and resubmit."
+      );
+    }
+    updateDocsCta(activeDocs);
     return;
   }
 
   closeSheet(verifySheet);
   openSheet(submittedSheet);
+  state.profileComplete = true;
+  state.verifyFailCount = 0;
+  syncHomeCatalogLock();
   state.aiRunning = false;
+}
+
+function syncHomeCatalogLock() {
+  const home = document.querySelector('.screen[data-screen="home"] .home');
+  if (!home) return;
+  home.classList.toggle("is-catalog-locked", !state.profileComplete);
+}
+
+function bindHomeCatalogLock() {
+  const home = document.querySelector(".screen.active .home");
+  if (!home) return;
+  syncHomeCatalogLock();
+  if (!home.classList.contains("is-catalog-locked")) return;
+
+  home.querySelectorAll(".home-product-card, .home-brand, .home-offer-row").forEach((el) => {
+    el.onclick = (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      goToId("my-pharmacy");
+    };
+  });
 }
 
 function bindAiVerify() {
   const root = document.querySelector(".screen.active .cp");
   if (!root) return;
 
+  applyAccountLockUI();
+
   root.querySelectorAll("[data-ai-verify]").forEach((btn) => {
     btn.onclick = (e) => {
       e.preventDefault();
       e.stopPropagation();
+      if (state.accountLocked) {
+        openSheet(root.querySelector("#account-locked-sheet"));
+        return;
+      }
       runAiVerification(root);
     };
   });
@@ -673,6 +792,14 @@ function bindAiVerify() {
       e.preventDefault();
       e.stopPropagation();
       closeSheet(root.querySelector("#profile-submitted-sheet"));
+    };
+  });
+
+  root.querySelectorAll("[data-locked-close]").forEach((el) => {
+    el.onclick = (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      closeSheet(root.querySelector("#account-locked-sheet"));
     };
   });
 
@@ -765,6 +892,14 @@ function goTo(index) {
     bindGoto();
   } catch (err) {
     console.error("bindGoto failed", err);
+  }
+
+  if (step.id === "home") {
+    try {
+      bindHomeCatalogLock();
+    } catch (err) {
+      console.error("bindHomeCatalogLock failed", err);
+    }
   }
 
   if (els.panelSteps?.classList.contains("active")) {
